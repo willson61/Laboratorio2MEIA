@@ -8,8 +8,10 @@ package lab.pkg2.mie.pkg2018;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 
 /**
@@ -79,8 +81,8 @@ public class MainView extends javax.swing.JFrame {
     File archivo1 = new File("C:\\MEIA\\puntuacion.txt");
     File archivo2 = new File("C:\\MEIA\\resultado.txt");
     File usuario = new File("C:\\MEIA\\usuario.txt");
-    static ArrayList<Integer> valores;
-    static ArrayList<Integer> criterio;
+    static ArrayList<Integer> valores = new ArrayList<Integer>();
+    static ArrayList<Integer> criterio = new ArrayList<Integer>();
     String strError;
     
     public void leerArchivo(){
@@ -134,8 +136,8 @@ public class MainView extends javax.swing.JFrame {
     public String calcularSeguridad(String contraseña){
         int puntos = 0;
         String mensaje = "";
-        if(valores.get(0) < contraseña.length()){
-            labelInfo.setText("La contraseña debe ser mayor a "+valores.get(0).toString() + " caracteres \n porfavor ingrese nuevamente una contraseña");
+        if(contraseña.length() < valores.get(0)){
+            mensaje = ("La contraseña debe ser mayor a "+valores.get(0).toString() + " caracteres \n porfavor ingrese nuevamente una contraseña");
         }
         else{
             puntos += valores.get(1)*contraseña.length();
@@ -149,18 +151,18 @@ public class MainView extends javax.swing.JFrame {
             if(calcularNumeros(contraseña) == contraseña.length()){
                 puntos = puntos - valores.get(7);
             }
-        }
-        if((puntos > criterio.get(0)) && (puntos <= criterio.get(1))){
+            if((puntos >= criterio.get(0)) && (puntos <= criterio.get(1))){
             mensaje = "Contraseña Insegura";
-        }
-        if((puntos > criterio.get(2)) && (puntos <= criterio.get(3))){
-            mensaje = "Contraseña poco Segura";
-        }
-        if((puntos > criterio.get(4)) && (puntos <= criterio.get(5))){
-            mensaje = "Contraseña Segura";
-        }
-        if((puntos > criterio.get(6)) && (puntos <= criterio.get(7))){
-            mensaje = "Contraseña muy Segura";
+            }
+            if((puntos >= criterio.get(2)) && (puntos <= criterio.get(3))){
+                mensaje = "Contraseña poco Segura";
+            }
+            if((puntos >= criterio.get(4)) && (puntos <= criterio.get(5))){
+                mensaje = "Contraseña Segura";
+            }
+            if((puntos >= criterio.get(6)) && (puntos <= criterio.get(7))){
+                mensaje = "Contraseña muy Segura";
+            }
         }
         return mensaje;
     }
@@ -203,23 +205,37 @@ public class MainView extends javax.swing.JFrame {
     }
     
     private void btnValidarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnValidarActionPerformed
-        String seguridad = calcularSeguridad(txtContraseña.getText());
-        String contraseña = txtContraseña.getText();
-        try{
-            FileWriter Escribir = new FileWriter(usuario, true);
-            BufferedWriter bw = new BufferedWriter(Escribir);
-            bw.write("\n"+contraseña);
-            bw.close();
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-        
-        if(usuario.exists()){
-            
+        leerArchivo();
+        if(txtContraseña.getText().equals("")){
+            labelInfo.setText("Debe ingresar una contraseña para continuar");
         }
         else{
-            
+            String seguridad = calcularSeguridad(txtContraseña.getText());
+            String contraseña = txtContraseña.getText();
+            labelInfo.setText(seguridad);
+            if((seguridad.equals("Contraseña Segura")) || (seguridad.equals("Contraseña muy Segura"))){
+                try{
+                    FileWriter Escribir = new FileWriter(usuario, true);
+                    BufferedWriter bw = new BufferedWriter(Escribir);
+                    FileOutputStream fos = new FileOutputStream(usuario);
+                    MessageDigest md = MessageDigest.getInstance("MD5");
+                    byte[] messageDigest = md.digest(contraseña.getBytes());
+                    if(usuario.exists()){
+                        fos.write('\n');
+                        fos.write(messageDigest);
+                    }
+                    else{
+                        fos.write(messageDigest);
+                    }
+                    fos.flush();
+                    fos.close();
+                    bw.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
         }
+        
     }//GEN-LAST:event_btnValidarActionPerformed
 
     /**
